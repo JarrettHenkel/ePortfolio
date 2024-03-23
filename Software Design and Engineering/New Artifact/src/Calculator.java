@@ -1,3 +1,10 @@
+/*
+ * Calculator.java
+ *
+ *  Date: 03/24/2023
+ *  Author: Jarrett Henkel
+ */
+
 import java.util.InputMismatchException;
 import java.util.Scanner;
 

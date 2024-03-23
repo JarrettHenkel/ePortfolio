@@ -15,8 +15,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "d:/Documents/Class/Semester9/ComputerScienceCapstone/Week1",
-      "program": "d:/Documents/Class/Semester9/ComputerScienceCapstone/Week1/build/Debug/outDebug",
+      "cwd": "d:/Documents/GitHub/ePortfolio/Software Design and Engineering/Calculator",
+      "program": "d:/Documents/GitHub/ePortfolio/Software Design and Engineering/Calculator/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
