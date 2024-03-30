@@ -15,8 +15,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\NewArtifact.cpp">
+    <ClCompile Include="..\..\NewArtifact.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Algorithms and Data Structures.sln" />
   </ItemGroup>
 </Project>

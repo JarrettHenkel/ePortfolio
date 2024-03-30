@@ -127,7 +127,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\NewArtifact.cpp" />
+    <ClCompile Include="..\..\NewArtifact.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Algorithms and Data Structures.sln" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

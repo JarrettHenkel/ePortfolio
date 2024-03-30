@@ -19,10 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="OldArtifact.cpp" />
+    <ClCompile Include="..\..\OldArtifact.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\locale.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Algorithms and Data Structures.sln" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

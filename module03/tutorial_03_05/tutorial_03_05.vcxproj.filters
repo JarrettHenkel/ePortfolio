@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="OldArtifact.cpp">
+    <ClCompile Include="..\..\OldArtifact.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -23,5 +23,8 @@
     <ClInclude Include="C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\locale.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Algorithms and Data Structures.sln" />
   </ItemGroup>
 </Project>
