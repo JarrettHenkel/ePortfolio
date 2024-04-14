@@ -3,6 +3,13 @@
   "configurations": [
     {
       "type": "java",
+      "name": "GUICalculator",
+      "request": "launch",
+      "mainClass": "GUICalculator",
+      "projectName": "ePortfolio_1ca7823f"
+    },
+    {
+      "type": "java",
       "name": "Calculator",
       "request": "launch",
       "mainClass": "Calculator",
@@ -15,8 +22,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "d:/Documents/GitHub/ePortfolio/Software Design and Engineering/Calculator",
-      "program": "d:/Documents/GitHub/ePortfolio/Software Design and Engineering/Calculator/build/Debug/outDebug",
+      "cwd": "d:/Documents/GitHub/ePortfolio/Algorithms-and-Data-Structures/New Artifact",
+      "program": "d:/Documents/GitHub/ePortfolio/Algorithms-and-Data-Structures/New Artifact",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
