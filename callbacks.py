@@ -1,13 +1,14 @@
 # =============================================================================
 # File Name: callbacks.py
-print('File Running: callbacks.py Running')
+print('File Running: callbacks.py')
+# It interacts with MongoDB for CRUD operations and uses Dash components for interactive
+# visualization and user interface. This script handles user authentication, data visualization,
+# data updates, and user registration.
 # =============================================================================
 import dash
-from passlib.hash import pbkdf2_sha256
 from dash import Dash, dcc, html, Input, Output, State, callback, MATCH, no_update, ALL, dash_table as dt
 import pandas as pd
 import plotly.express as px
-from pymongo import MongoClient
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 import base64
@@ -15,17 +16,22 @@ from config import DB_USERNAME, DB_PASSWORD
 from db import get_db
 from utils import load_csv_data
 from auth import authenticate_user
-from animal_shelter import AnimalShelter
 from collections import Counter
+from passlib.hash import pbkdf2_sha256
 
-# Function to register callbacks
 def register_callbacks(app):
+    # Database connections setup: Initializes the MongoDB connection using a database helper function
+    # and specifies the collections to interact with.
     db = get_db()
     collection = db['animals']
     collection_users = db['users']
 
+    # Load initial CSV data into the database: Reads animal data from a CSV file and loads it into
+    # MongoDB for initial setup or refreshing the database.
     load_csv_data()
 
+    # Modal setup for user login: Defines the structure and elements of the modal popup for user login,
+    # including input fields for username and password, and a login button.
     login_modal = dbc.Modal(
         [
             dbc.ModalHeader("Login"),
@@ -44,16 +50,18 @@ def register_callbacks(app):
         is_open=False,
     )
 
-    collection_users = db['users']
-    collection = db['animals']
-    collection_users = db['users']
+    # Print to console to confirm MongoDB connections: Outputs messages to the console to confirm successful
+    # connection to MongoDB and successful data population from CSV. Inserts collection records.
     print('Connected to MongoDB')
-    ##collection.insert_many(records)
     print('Local MongoDB populated with CSV')
 
+    # Function to update dashboard data based on filter type: Defines a function to filter the data based on
+    # specific criteria related to animal type and updates the dashboard accordingly.
     def update_dashboard(filter_type):
+        # Initialize query dictionary
         query = {}
         print('Reloaded Data')
+        # Define filter conditions based on filter type
         if filter_type == 'Water':
             query = {
                 "breed": {"$in": ["Labrador Retriever Mix", "Chesapeake Bay Retriever", "Newfoundland"]},
@@ -73,18 +81,14 @@ def register_callbacks(app):
             }
             print('Loaded Disaster')
 
+        # Execute query and return filtered dataframe: Executes the MongoDB query and converts the results
+        # into a DataFrame for use in the Dash application.
         df_filtered = pd.DataFrame.from_records(collection.find(query, projection={'_id': 0}))
         return df_filtered
 
-    app.config.suppress_callback_exceptions = True
-    shelter = AnimalShelter()
-    df = pd.DataFrame.from_records(collection.find({}, projection={'_id': 0}))
-
-    with open('Grazioso_Salvare_Logo.png', 'rb') as f:
-        encoded_image = base64.b64encode(f.read())
-
-    current_filter_type = 'All'
-
+    # Callback for adding a new animal to the database: Defines a function that is triggered when the user
+    # attempts to add a new animal. This function handles input validation, adds the animal to the database,
+    # and clears the input fields after the operation.
     @app.callback(
         [
             Output('new-animal-name', 'value'),
@@ -107,12 +111,19 @@ def register_callbacks(app):
         ],
         prevent_initial_call=True
     )
+
+    # Reset fields after successful addition, disable button if not authenticated: Clears the input
+    # fields if the user is authenticated and adds the animal. If the user is not authenticated, the
+    # button is disabled to prevent the function from executing.
     def handle_add_animal_button(n_clicks, auth_status, name, breed, age, sex, chip_id):
         if auth_status is not None:
             return '', '', '', '', '', False
         else:
             return '', '', '', '', '', True
 
+    # Callback to handle user login: Manages user authentication process. It checks credentials against
+    # the database, updates the user interface based on authentication status, and handles the opening
+    # and closing of the login modal.
     @app.callback(
         [
             Output('auth-status', 'children'),
@@ -132,6 +143,10 @@ def register_callbacks(app):
         ],
         prevent_initial_call=True
     )
+
+    # Process login credentials and manage modal state: This function processes the user input for
+    # username and password, authenticates against the database, and updates the modal and page state
+    # based on whether the login was successful or not.
     def login_user(login_button_clicks, open_login_clicks, username, password, url_pathname, is_login_modal_open):
         try:
             if login_button_clicks:
@@ -163,10 +178,16 @@ def register_callbacks(app):
                 url_pathname,
             )
 
+    # Callback to update the map based on selected rows in the data table: Defines a function that adjusts
+    # the map display based on the animal selected from the data table. It sets the map's focus to the
+    # location coordinates associated with the selected animal.
     @app.callback(
         Output('map-id', "children"),
         [Input('datatable-id', "selected_rows")]
     )
+
+    # Define default map properties and handle marker updates: Checks if any rows are selected and updates
+    # the map accordingly. If no rows are selected, it shows a default view.
     def update_map(selected_rows):
         global df
         toolTip = "Austin Animal Center"
@@ -204,6 +225,9 @@ def register_callbacks(app):
                                           ])
                 ]
 
+
+    # Callback to update the data table when filters are changed or new animals are added: Manages the
+    # data displayed in the data table, updating it based on filter changes or the addition of new animals.
     @app.callback(
         Output('datatable-id', 'data'),
         [
@@ -220,6 +244,9 @@ def register_callbacks(app):
         ],
         prevent_initial_call=True
     )
+
+    # Handle data table updates based on user interactions: Responds to filter changes and new animal
+    # additions by refreshing the data displayed in the data table.
     def update_data(selected_filter_type, n_clicks, name, breed, age, sex, chip_id, existing_data):
         global df, current_filter_type
 
@@ -263,10 +290,17 @@ def register_callbacks(app):
             print(f"Error: {str(e)}")
             return dash.no_update
 
+    # Callback to update the graphs based on the data shown in the data table: This function generates
+    # interactive graphs based on the data filtered or selected in the data table. It uses Plotly Express
+    # to create pie charts or other visualizations that summarize the data visually.
     @app.callback(
         Output('graph-id', "children"),
         [Input('datatable-id', "derived_virtual_data")]
     )
+
+    # Generate graphs based on data from the data table: Checks if the viewData is available and if it
+    # contains the 'breed' key. It then calculates the count of each breed and generates a pie chart
+    # showing the distribution of breeds.
     def update_graphs(viewData):
         if not viewData or not any('breed' in d for d in viewData):
             return []
@@ -294,6 +328,8 @@ def register_callbacks(app):
         )
         return [pie_chart]
 
+    # Callback to manage user registration modal: Handles the user registration process, including opening
+    # and closing the modal, validating the input, and updating the user database.    
     @app.callback(
         [
             Output('register-modal', 'is_open'),
@@ -311,7 +347,12 @@ def register_callbacks(app):
         ],
         prevent_initial_call=True
     )
+    
+    # Handle the user registration process: Opens the registration modal on user request, registers
+    # a new user if the button is clicked and the username doesn't exist, handles error reporting and
+    # modal states based on the actions taken.
     def manage_register_modal(open_clicks, register_button_clicks, register_username, register_password, is_register_modal_open):
+        # Handle the user registration process
         try:
             print("Callback triggered.")
             print(f"open_clicks: {open_clicks}, register_button_clicks: {register_button_clicks}")

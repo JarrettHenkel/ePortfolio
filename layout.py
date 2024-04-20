@@ -1,6 +1,9 @@
 # =============================================================================
 # File Name: layout.py
-print('File Running: layout.py Running')
+# This script sets up the layout for a Dash application using various Dash and Dash-Bootstrap components.
+# It handles the creation of the user interface, including navigation, data tables, input forms, and
+# other interactive elements. This script also integrates visual components like images and modal dialogs.
+print('File Running: layout.py')
 # =============================================================================
 from dash import dcc, html, dash_table as dt
 import dash_bootstrap_components as dbc
@@ -9,28 +12,32 @@ import pandas as pd
 from db import get_db
 
 
+# Load and encode the company logo for use in the web app
 with open('Grazioso_Salvare_Logo.png', 'rb') as f:
     encoded_image = base64.b64encode(f.read())
 
-    db = get_db()
-    collection = db['animals']
-    collection_users = db['users']
-    df = pd.DataFrame(list(collection.find({}, projection={'_id': 0})))
+# Database setup: connects to MongoDB, fetches data, and prepares it for the UI
+db = get_db()  # Establish a connection to the MongoDB database
+collection = db['animals']  # Access the 'animals' collection
+collection_users = db['users']  # Access the 'users' collection
+df = pd.DataFrame(list(collection.find({}, projection={'_id': 0})))  # Load animal data from MongoDB into a DataFrame
 
-    if 'Chip_ID' not in df.columns:
-        df['Chip_ID'] = ''
+# Data preparation: Ensures essential columns exist and are correctly formatted
+if 'Chip_ID' not in df.columns:
+    df['Chip_ID'] = ''
+if 'animal_id' not in df.columns:
+    df['animal_id'] = range(1, len(df) + 1)
 
-    if 'animal_id' not in df.columns:
-        df['animal_id'] = range(1, len(df) + 1)
+# Define the table structure for the web interface, including options for user interactions
+columns_order = [
+    {"name": "animal_id", "id": "animal_id", "deletable": False, "selectable": True},
+    {"name": "Chip_ID", "id": "Chip_ID", "deletable": False, "selectable": True, "presentation": "dropdown"},
+] + [
+    {"name": i, "id": i, "deletable": False, "selectable": True} for i in df.columns
+    if i not in ["animal_id", "Chip_ID"] and i != "1"
+]
 
-    columns_order = [
-        {"name": "animal_id", "id": "animal_id", "deletable": False, "selectable": True},
-        {"name": "Chip_ID", "id": "Chip_ID", "deletable": False, "selectable": True, "presentation": "dropdown"},
-    ] + [
-        {"name": i, "id": i, "deletable": False, "selectable": True} for i in df.columns
-        if i not in ["animal_id", "Chip_ID"] and i != "1"
-    ]
-
+# Function to generate the layout of the application, structuring all elements and interactions
 def create_layout(app):
     return html.Div([
         dcc.Location(id='url', refresh=False),

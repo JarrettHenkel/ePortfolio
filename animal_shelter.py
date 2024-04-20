@@ -1,39 +1,41 @@
 # =============================================================================
 # File Name: animal_shelter.py
-print('File Running: animal_shelter.py Running')
+# This module defines the AnimalShelter class, providing methods to interact with the database for
+# CRUD operations on animal records. It employs a singleton pattern to ensure a single instance.
 # =============================================================================
+print('File Running: animal_shelter.py')  # Logs that this class module is running.
+
 from db import get_db
 from bson.objectid import ObjectId
 import logging
 
 class AnimalShelter:
-    _instance = None  # Class variable to store the singleton instance
+    _instance = None
 
     def __new__(cls):
+        # Ensure only one instance of AnimalShelter exists (Singleton Pattern).
         if cls._instance is None:
             cls._instance = super(AnimalShelter, cls).__new__(cls)
-            cls._instance.db = get_db()  
-            cls._instance.collection = cls._instance.db['animals']  
+            cls._instance.db = get_db()  # Initialize the database connection.
+            cls._instance.collection = cls._instance.db['animals']
         return cls._instance
 
     def __init__(self):
-        self.db = get_db()  # Initialize database connection
+        self.db = get_db()
         self.collection = self.db['animals']
         self.records_updated = 0
         self.records_matched = 0
         self.records_deleted = 0
-   
+
     def create(self, data):
-        # Check if data is not empty and insert the document into the collection.
+        # Insert a new document into the collection if data is provided.
         if data:
             result = self.collection.insert_one(data)
             return result.inserted_id if result else None
-        else:
-            return None
 
     def read(self, search):
+        # Retrieve documents based on a search criteria, or all documents if no criteria provided.
         logging.debug("Trying to read data with search query: {}".format(search))
-        # Check if the search criteria is not empty and query the collection.
         if search:
             search_result = list(self.collection.find(search))
             logging.debug("Search Result: {}".format(search_result))
@@ -42,34 +44,20 @@ class AnimalShelter:
             all_documents = list(self.collection.find({}))
             logging.debug("All Documents: {}".format(all_documents))
             return all_documents
-        
-    def getRecordId(self, post_id):
-        _data = self.dataBase.animals.find_one({'_id': ObjectId(post_id)})
-        return _data
-        
-    def getRecordCriteria(self, criteria):
-        if criteria:
-            _data = list(self.dataBase.animals.find(criteria, {'_id': 0}))
-        else:
-            _data = list(self.dataBase.animals.find({}, {'_id': 0}))
-        return _data    
-    
+
     def update(self, search, update_data):
-        # Check if the search criteria and update data are not empty.
+        # Update documents based on search criteria and provided update data.
         if search and update_data:
             result = self.collection.update_many(search, {"$set": update_data})
             return result.modified_count
-        else:
-            return 0
 
     def delete(self, search):
-        # Check if the search criteria is not empty.
+        # Delete documents based on a search criteria.
         if search:
             result = self.collection.delete_many(search)
             return result.deleted_count
-        else:
-            return 0
 
     def addAnimal(self, name, breed, age, sex):
+        # Utility method to add a new animal to the database.
         new_animal = {'name': name, 'breed': breed, 'age_upon_outcome_in_weeks': age, 'sex_upon_outcome': sex}
-        return self.createRecord(new_animal)
+        return self.create(new_animal)
