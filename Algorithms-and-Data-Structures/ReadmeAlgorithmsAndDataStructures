@@ -1,0 +1,52 @@
+# Advanced Java Calculator Project
+
+This repository hosts the Java implementation of an advanced calculator that was originally created as a simple C++ calculator early in my coding career, in March 2023. The transition to Java and the introduction of new features showcase significant advancements in my programming abilities.
+
+## Project Overview
+
+The Java version of the calculator not only translates the functionality from C++ but also extends it with robust input validation, graphical user interface enhancements, and the integration of complex mathematical functions. BST was implemented along with the ability to store and sort past entered commands. This transition highlights my skills in adapting and enhancing software applications to meet more complex and modern requirements.
+
+## Features
+
+- **Graphical User Interface**: Utilizes Java Swing to provide an interactive and user-friendly interface.
+- **Enhanced Mathematical Operations**: Supports operations beyond basic arithmetic, including nth roots, exponential calculations, logarithmic functions, and trigonometric operations.
+- **Input Validation**: Ensures that user inputs are valid before processing to prevent runtime errors and enhance user experience.
+- **Data Structures**: Implements a Binary Search Tree (BST) for efficient management and retrieval of calculation records, showing an understanding of complex data structures.
+- **File I/O**: Integrates file input/output to save and retrieve previous calculations, demonstrating handling of persistent data.
+
+## Enhancements and Learning Outcomes
+
+- **Modularity**: Breaking down operations into separate functions for better readability and maintainability.
+- **Algorithm Enhancement**: Adding complex algorithms for mathematical operations that were not part of the initial release.
+- **Security Awareness**: Through input validation and careful data handling, I developed a security-focused mindset that is crucial for modern software development.
+
+## StartUp
+  Navigate to the folder with GUICalculator
+  ```
+  cd /NewArtifact/src
+  ```
+  Once in the right folder in terminal.
+  ```
+  javac GUICalculator.java
+  java GUICalculator
+  ```
+## Usage
+
+Once the application is running:
+
+- **Use the GUI buttons** to perform calculations.
+- **Access the memory functions** through the GUI to view, add, or remove stored calculations.
+- **Utilize the sorting features** to sort the stored data based on different criteria such as date, operation, or operands.
+
+## Future Enhancements
+
+Plans for future enhancements include:
+
+- **Extending the calculator’s capabilities** to support more complex algebraic functions.
+- **Improving the GUI** for a more responsive and intuitive user experience.
+- **Adding network capabilities** to allow users to share and collaborate on calculations in real-time.
+
+## Challenges
+
+The main challenge was getting the various pop up windows to work while they and the main application is running. I needed to be able to ensure that they could all be open at the same time, update when needed, and not stop the other windows from functioning.
+

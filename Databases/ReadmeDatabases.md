@@ -2,7 +2,7 @@
 
 This project showcases a comprehensive MongoDB-backed Dash application designed for managing animal data with interactive user interfaces. Originally set up early in 2023, this artifact has been significantly enhanced to integrate modern best practices in application development, security, and database management.
 
-## Overview
+## Project Overview
 
 The application leverages MongoDB, a NoSQL database, for data storage and management. It utilizes Dash, a Python framework for building analytical web applications, to provide a user-friendly interface. The app is modular, featuring a clear separation of concerns through Object-Oriented Programming (OOO) principles, and enhanced security measures for user authentication and authorization.
 
@@ -20,6 +20,13 @@ The application leverages MongoDB, a NoSQL database, for data storage and manage
   .venv\Scripts\activate
   ```
   Go into the .env and set the Database username/password to what you wish.
+
+  Open two terminals and enter each command into its own terminal.
+
+  ```
+  python app.py
+  waitress-serve --host=0.0.0.0 --port=8050 app:app      
+  ```
 
 ## Future Enhancements
 

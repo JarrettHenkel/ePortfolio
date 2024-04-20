@@ -1,9 +1,10 @@
-#include <iostream>         // cout, cerr
-#include <cstdlib>          // EXIT_FAILURE
-#include <GL/glew.h>        // GLEW library
-#include <GLFW/glfw3.h>     // GLFW library
+#include <iostream>     // cout, cerr
+#include <cstdlib>      // EXIT_FAILURE
+#include <GL/glew.h>    // GLEW library
+#include <GLFW/glfw3.h> // GLFW library
+#include <GL/gl.h>      // OpenGL library
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>      // Image loading Utility functions
+#include <stb_image.h> // Image loading Utility functions
 
 // GLM Math Header inclusions
 #include <glm/glm.hpp>
@@ -20,7 +21,7 @@ using namespace std; // Standard namespace
 #define GLSL(Version, Source) "#version " #Version " core \n" #Source
 #endif
 
-//MPI definition 
+// MPI definition
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -28,33 +29,32 @@ using namespace std; // Standard namespace
 // Unnamed namespace
 namespace
 {
-    const char* const WINDOW_TITLE = "Jarrett Henkel Project"; // Macro for window title
+    const char *const WINDOW_TITLE = "Jarrett Henkel Project"; // Macro for window title
 
     // Variables for window width and height
     const int WINDOW_WIDTH = 800;
     const int WINDOW_HEIGHT = 600;
 
-
     // Stores the GL data relative to a given mesh
     struct GLMesh
     {
-        GLuint vao;         // Handle for the vertex array object
-        GLuint vbos[2];     // Handles for the vertex buffer objects
-        GLuint nIndices;    // Number of indices of the mesh
-        GLuint texture;     // Handle for the texture
+        GLuint vao;      // Handle for the vertex array object
+        GLuint vbos[2];  // Handles for the vertex buffer objects
+        GLuint nIndices; // Number of indices of the mesh
+        GLuint texture;  // Handle for the texture
     };
 
     // Main GLFW window
-    GLFWwindow* gWindow = nullptr;
+    GLFWwindow *gWindow = nullptr;
     // Cube mesh data
     GLMesh gMesh;
     // Sphere mesh data
     GLMesh gSphere;
     // Plane mesh data
     GLMesh gPlane;
-    //Cylinder mesh data
+    // Cylinder mesh data
     GLMesh gCylinder;
-    //Torus mesh data
+    // Torus mesh data
     GLMesh gTorus;
     // Shader program
     GLuint gProgramId;
@@ -95,107 +95,103 @@ float gSpeedMultiplier = 1.0f;
 float gDeltaTime = 0.0f; // Time between current frame and last frame
 float gLastFrame = 0.0f;
 
-
 /* User-defined Function prototypes to:
  * initialize the program, set the window size,
  * redraw graphics on the window when resized,
  * and render graphics on the screen
  */
-bool UInitialize(int, char* [], GLFWwindow** window);
-void UResizeWindow(GLFWwindow* window, int width, int height);
-void UProcessInput(GLFWwindow* window);
-void UMousePositionCallback(GLFWwindow* window, double xpos, double ypos);
-void UMouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
-void UMouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-void UCreateMesh(GLMesh& mesh);
-void UCreateSphere(GLMesh& mesh, float radius, int sectorCount, int stackCount);
-void UCreatePlane(GLMesh& mesh);
-void UCreateCylinder(GLMesh& mesh, float baseRadius, float topRadius, float height, int sectorCount, int stackCount);
-void UCreateTorus(GLMesh& mesh, float ringRadius, float tubeRadius, int ringSectorCount, int tubeSectorCount);
-bool UCreateTexture(const char* filename, GLuint& textureId);
-void UDestroyMesh(GLMesh& mesh);
-void UDestroySphere(GLMesh& mesh);
-void UDestroyPlane(GLMesh& mesh);
+bool UInitialize(int, char *[], GLFWwindow **window);
+void UResizeWindow(GLFWwindow *window, int width, int height);
+void UProcessInput(GLFWwindow *window);
+void UMousePositionCallback(GLFWwindow *window, double xpos, double ypos);
+void UMouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset);
+void UMouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
+void UCreateMesh(GLMesh &mesh);
+void UCreateSphere(GLMesh &mesh, float radius, int sectorCount, int stackCount);
+void UCreatePlane(GLMesh &mesh);
+void UCreateCylinder(GLMesh &mesh, float baseRadius, float topRadius, float height, int sectorCount, int stackCount);
+void UCreateTorus(GLMesh &mesh, float ringRadius, float tubeRadius, int ringSectorCount, int tubeSectorCount);
+bool UCreateTexture(const char *filename, GLuint &textureId);
+void UDestroyMesh(GLMesh &mesh);
+void UDestroySphere(GLMesh &mesh);
+void UDestroyPlane(GLMesh &mesh);
 void UDestroyTexture(GLuint textureId);
 void URender();
-bool UCreateShaderProgram(const char* vtxShaderSource, const char* fragShaderSource, GLuint& programId);
+bool UCreateShaderProgram(const char *vtxShaderSource, const char *fragShaderSource, GLuint &programId);
 void UDestroyShaderProgram(GLuint programId);
 
-
-const GLchar* vertexShaderSource = GLSL(440,
+const GLchar *vertexShaderSource = GLSL(
+    440,
     layout(location = 0) in vec3 position; // VAP position 0 for vertex position data
-layout(location = 1) in vec3 normal; // VAP position 1 for normals
-layout(location = 2) in vec2 textureCoordinate;
+    layout(location = 1) in vec3 normal;   // VAP position 1 for normals
+    layout(location = 2) in vec2 textureCoordinate;
 
-out vec3 vertexNormal; // For outgoing normals to fragment shader
-out vec3 vertexFragmentPos; // For outgoing color / pixels to fragment shader
-out vec2 vertexTextureCoordinate;
+    out vec3 vertexNormal;      // For outgoing normals to fragment shader
+    out vec3 vertexFragmentPos; // For outgoing color / pixels to fragment shader
+    out vec2 vertexTextureCoordinate;
 
-//Uniform / Global variables for the  transform matrices
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+    // Uniform / Global variables for the  transform matrices
+    uniform mat4 model;
+    uniform mat4 view;
+    uniform mat4 projection;
 
-void main()
-{
-    gl_Position = projection * view * model * vec4(position, 1.0f); // Transforms vertices into clip coordinates
+    void main() {
+        gl_Position = projection * view * model * vec4(position, 1.0f); // Transforms vertices into clip coordinates
 
-    vertexFragmentPos = vec3(model * vec4(position, 1.0f)); // Gets fragment / pixel position in world space only (exclude view and projection)
+        vertexFragmentPos = vec3(model * vec4(position, 1.0f)); // Gets fragment / pixel position in world space only (exclude view and projection)
 
-    vertexNormal = mat3(transpose(inverse(model))) * normal; // get normal vectors in world space only and exclude normal translation properties
-    vertexTextureCoordinate = textureCoordinate;
-}
-);
+        vertexNormal = mat3(transpose(inverse(model))) * normal; // get normal vectors in world space only and exclude normal translation properties
+        vertexTextureCoordinate = textureCoordinate;
+    });
 
 /* Fragment Shader Source Code*/
-const GLchar* fragmentShaderSource = GLSL(440,
-    in vec3 vertexNormal; // For incoming normals
-in vec3 vertexFragmentPos; // For incoming fragment position
-in vec2 vertexTextureCoordinate;
+const GLchar *fragmentShaderSource = GLSL(
+    440,
+    in vec3 vertexNormal;      // For incoming normals
+    in vec3 vertexFragmentPos; // For incoming fragment position
+    in vec2 vertexTextureCoordinate;
 
-out vec4 fragmentColor; // For outgoing color to the GPU
+    out vec4 fragmentColor; // For outgoing color to the GPU
 
-// Uniform / Global variables for object color, light color, light position, and camera/view position
-uniform vec3 objectColor;
-uniform vec3 lightColor;
-uniform vec3 lightPos;
-uniform vec3 lightColor2;
-uniform vec3 lightPos2;
-uniform vec3 viewPosition;
-uniform sampler2D uTexture; // Texture sampler
+    // Uniform / Global variables for object color, light color, light position, and camera/view position
+    uniform vec3 objectColor;
+    uniform vec3 lightColor;
+    uniform vec3 lightPos;
+    uniform vec3 lightColor2;
+    uniform vec3 lightPos2;
+    uniform vec3 viewPosition;
+    uniform sampler2D uTexture; // Texture sampler
 
-void main()
-{
-    // Ambient lighting
-    float ambientStrength = 0.1f;
-    vec3 ambient = ambientStrength * lightColor;
+    void main() {
+        // Ambient lighting
+        float ambientStrength = 0.1f;
+        vec3 ambient = ambientStrength * lightColor;
 
-    // Diffuse lighting for the first light source
-    vec3 norm = normalize(vertexNormal);
-    vec3 lightDirection = normalize(lightPos - vertexFragmentPos);
-    float impact = max(dot(norm, lightDirection), 0.0);
-    vec3 diffuse = impact * lightColor;
+        // Diffuse lighting for the first light source
+        vec3 norm = normalize(vertexNormal);
+        vec3 lightDirection = normalize(lightPos - vertexFragmentPos);
+        float impact = max(dot(norm, lightDirection), 0.0);
+        vec3 diffuse = impact * lightColor;
 
-    // Diffuse lighting for the second light source
-    vec3 lightDirection2 = normalize(lightPos2 - vertexFragmentPos);
-    float impact2 = max(dot(norm, lightDirection2), 0.0);
-    vec3 diffuse2 = impact2 * lightColor2;
+        // Diffuse lighting for the second light source
+        vec3 lightDirection2 = normalize(lightPos2 - vertexFragmentPos);
+        float impact2 = max(dot(norm, lightDirection2), 0.0);
+        vec3 diffuse2 = impact2 * lightColor2;
 
-    // Combine the impact of both lights
-    vec3 combinedDiffuse = diffuse + diffuse2;
+        // Combine the impact of both lights
+        vec3 combinedDiffuse = diffuse + diffuse2;
 
-    // Texture color
-    vec4 textureColor = texture(uTexture, vertexTextureCoordinate);
+        // Texture color
+        vec4 textureColor = texture(uTexture, vertexTextureCoordinate);
 
-    // Calculate final color
-    vec3 finalColor = (ambient + combinedDiffuse) * textureColor.xyz;
+        // Calculate final color
+        vec3 finalColor = (ambient + combinedDiffuse) * textureColor.xyz;
 
-    fragmentColor = vec4(finalColor, 1.0); // Send final color to GPU
-}
-);
+        fragmentColor = vec4(finalColor, 1.0); // Send final color to GPU
+    });
 
 // Images are loaded with Y axis going down, but OpenGL's Y axis goes up, so let's flip it
-void flipImageVertically(unsigned char* image, int width, int height, int channels)
+void flipImageVertically(unsigned char *image, int width, int height, int channels)
 {
     for (int j = 0; j < height / 2; ++j)
     {
@@ -213,7 +209,7 @@ void flipImageVertically(unsigned char* image, int width, int height, int channe
     }
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // Initialize GLFW and create a window
     if (!UInitialize(argc, argv, &gWindow))
@@ -223,7 +219,8 @@ int main(int argc, char* argv[])
     UCreateMesh(gMesh);
 
     // Load texture for the cube
-    if (!UCreateTexture("../../resources/textures/Cube2.png", gMesh.texture)) {
+    if (!UCreateTexture("../../resources/textures/Cube2.png", gMesh.texture))
+    {
         cout << "Failed to load texture for cube" << endl;
         return EXIT_FAILURE;
     }
@@ -232,7 +229,8 @@ int main(int argc, char* argv[])
     UCreatePlane(gPlane);
 
     // Load texture for the plane
-    if (!UCreateTexture("../../resources/textures/Granite.jpg", gPlane.texture)) {
+    if (!UCreateTexture("../../resources/textures/Granite.jpg", gPlane.texture))
+    {
         cout << "Failed to load texture for plane" << endl;
         return EXIT_FAILURE;
     }
@@ -241,7 +239,8 @@ int main(int argc, char* argv[])
     UCreateSphere(gSphere, 0.5f, 36, 18);
 
     // Load texture for the sphere
-    if (!UCreateTexture("../../resources/textures/Styrofoam.jpg", gSphere.texture)) {
+    if (!UCreateTexture("../../resources/textures/Styrofoam.jpg", gSphere.texture))
+    {
         cout << "Failed to load texture for sphere" << endl;
         return EXIT_FAILURE;
     }
@@ -250,7 +249,8 @@ int main(int argc, char* argv[])
     UCreateCylinder(gCylinder, 0.5f, 0.5f, 2.0f, 36, 18);
 
     // Load texture for the cylinder
-    if (!UCreateTexture("../../resources/textures/Leopard.jpg", gCylinder.texture)) {
+    if (!UCreateTexture("../../resources/textures/Leopard.jpg", gCylinder.texture))
+    {
         cout << "Failed to load texture for cylinder" << endl;
         return EXIT_FAILURE;
     }
@@ -259,7 +259,8 @@ int main(int argc, char* argv[])
     UCreateTorus(gTorus, 0.7f, 0.3f, 36, 18); // Customize torus size and detail
 
     // Load texture for the torus
-    if (!UCreateTexture("../../resources/textures/Wood.jpg", gTorus.texture)) {
+    if (!UCreateTexture("../../resources/textures/Wood.jpg", gTorus.texture))
+    {
         cout << "Failed to load texture for torus" << endl;
         return EXIT_FAILURE;
     }
@@ -306,8 +307,10 @@ int main(int argc, char* argv[])
     return EXIT_SUCCESS;
 }
 
-// Initialize GLFW, GLEW, and create a window
-bool UInitialize(int argc, char* argv[], GLFWwindow** window)
+// This function initializes the GLFW library, creates an OpenGL window, sets up various window hints,
+// enables GLEW for managing OpenGL extensions, and sets up callback functions for handling window resizing, mouse
+// movement, mouse scrolling, and mouse button events. It returns true if initialization is successful, false otherwise.
+bool UInitialize(int argc, char *argv[], GLFWwindow **window)
 {
     // GLFW: initialize and configure
     // ------------------------------
@@ -322,7 +325,7 @@ bool UInitialize(int argc, char* argv[], GLFWwindow** window)
 
     // GLFW: window creation
     // ---------------------
-    * window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, NULL, NULL);
+    *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, NULL, NULL);
     if (*window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -356,9 +359,10 @@ bool UInitialize(int argc, char* argv[], GLFWwindow** window)
     return true;
 }
 
-
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-void UProcessInput(GLFWwindow* window)
+// This function processes user input from the keyboard and mouse. It checks for specific key presses
+// (WASD, QE) and updates the camera's movement accordingly. It also toggles between perspective and orthographic
+// projection mode when the 'P' key is pressed.
+void UProcessInput(GLFWwindow *window)
 {
     static const float cameraSpeed = 2.5f;
 
@@ -377,14 +381,18 @@ void UProcessInput(GLFWwindow* window)
         gCamera.ProcessKeyboard(UP, gDeltaTime);
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
         gCamera.ProcessKeyboard(DOWN, gDeltaTime);
-    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+    {
         isPerspective = !isPerspective;
         glfwWaitEventsTimeout(0.2);
     }
 }
-// glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
-void UMousePositionCallback(GLFWwindow* window, double xpos, double ypos)
+
+// This is a callback function that is called whenever the mouse cursor moves within the window.
+// It calculates the offset from the previous mouse position and updates the camera's orientation based on the offset.
+// This allows for smooth camera rotation when the mouse is moved.
+
+void UMousePositionCallback(GLFWwindow *window, double xpos, double ypos)
 {
     if (gFirstMouse)
     {
@@ -402,20 +410,22 @@ void UMousePositionCallback(GLFWwindow* window, double xpos, double ypos)
     gCamera.ProcessMouseMovement(xoffset, yoffset);
 }
 
+// This is a callback function that is called whenever the mouse scroll wheel is scrolled. It
+// updates a speed multiplier based on the scroll offset, which is then used to adjust the camera's movement speed.
+// This allows for zooming in and out of the scene.
 
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
-void UMouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+void UMouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
 {
-    gSpeedMultiplier += yoffset * 0.1f; // Adjust the 0.1f value to control how fast the speed changes
+    gSpeedMultiplier += yoffset * 0.1f;             // Adjust the 0.1f value to control how fast the speed changes
     gSpeedMultiplier = max(0.1f, gSpeedMultiplier); // Prevent the speed from going negative
 
     gCamera.MovementSpeed = 2.5f * gSpeedMultiplier; // Adjust the base speed (2.5f) as needed
 }
 
-// glfw: handle mouse button events
-// --------------------------------
-void UMouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+// This is a callback function that is called whenever a mouse button is pressed or released. It
+// currently just prints a message to the console indicating which mouse button was pressed or released.
+
+void UMouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     switch (button)
     {
@@ -452,15 +462,20 @@ void UMouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
     }
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-void UResizeWindow(GLFWwindow* window, int width, int height)
+//This is a callback function that is called whenever the window is resized. It updates the OpenGL
+// viewport to match the new window size, ensuring that the rendered scene is displayed correctly within the resized
+// window.
+void UResizeWindow(GLFWwindow *window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }
 
-
-// Functioned called to render a frame
-void URender() {
+// This function is responsible for rendering the scene. It clears the color and depth buffers, sets up the
+// camera and projection matrices, binds textures and mesh data, and draws the various objects (plane, cube, sphere,
+// cylinder, torus) in the scene. It also updates the positions of the sphere, cylinder, and torus based on their
+// respective orbit parameters.
+void URender()
+{
     // Enable z-depth
     glEnable(GL_DEPTH_TEST);
 
@@ -475,15 +490,17 @@ void URender() {
 
     // Projection transformation
     glm::mat4 projection;
-    if (isPerspective) {
+    if (isPerspective)
+    {
         projection = glm::perspective(glm::radians(gCamera.Zoom),
-            (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+                                      (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
     }
-    else {
+    else
+    {
         float orthoHeight = 5.0f;
         float aspectRatio = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
         projection = glm::ortho(-orthoHeight * aspectRatio, orthoHeight * aspectRatio,
-            -orthoHeight, orthoHeight, -10.0f, 10.0f);
+                                -orthoHeight, orthoHeight, -10.0f, 10.0f);
     }
 
     // Retrieve and pass transform matrices to the Shader program
@@ -514,14 +531,14 @@ void URender() {
     glBindTexture(GL_TEXTURE_2D, gPlane.texture);
     glm::mat4 planeModel = glm::mat4(1.0f);
     planeModel = glm::translate(planeModel, glm::vec3(0.0f, -0.5f, 0.0f)); // Position
-    planeModel = glm::scale(planeModel, glm::vec3(15.0f, 0.1f, 15.0f)); // Scale
+    planeModel = glm::scale(planeModel, glm::vec3(15.0f, 0.1f, 15.0f));    // Scale
     glUniformMatrix4fv(glGetUniformLocation(gProgramId, "model"), 1, GL_FALSE, glm::value_ptr(planeModel));
     glBindVertexArray(gPlane.vao);
     glDrawElements(GL_TRIANGLES, gPlane.nIndices, GL_UNSIGNED_SHORT, 0);
 
     // Cube
     glBindTexture(GL_TEXTURE_2D, gMesh.texture);
-    glm::mat4 cubeModel = glm::mat4(1.0f); // Reset model matrix
+    glm::mat4 cubeModel = glm::mat4(1.0f);                              // Reset model matrix
     cubeModel = glm::translate(cubeModel, glm::vec3(0.0f, 0.5f, 0.0f)); // Position
     cubeModel = glm::scale(cubeModel, glm::vec3(2.0f, 2.0f, 2.0f));
     cubeModel = glm::rotate(cubeModel, currentTime * glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -569,43 +586,43 @@ void URender() {
     glfwSwapBuffers(gWindow);
 }
 
-
-// Implements the UCreateMesh function
-void UCreateMesh(GLMesh& mesh)
+// This function generates the vertex data (positions, normals, texture coordinates) and index data for a
+// cube mesh. It then creates a Vertex Array Object (VAO), Vertex Buffer Object (VBO), and Element Buffer Object (EBO)
+// to store the mesh data and sets up the vertex attribute pointers for rendering.
+void UCreateMesh(GLMesh &mesh)
 {
     GLfloat verts[] = {
         // Positions          Normals              Texture Coords
         // Front face
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
         // Back face
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
+        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
         // Left face
-        -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
         // Right face
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
-         // Top face
-         -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
-         -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
-          0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f,
-          0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
-          // Bottom face
-          -0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
-          -0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-           0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-           0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f, 1.0f, 0.0f
-    };
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+        // Top face
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+        // Bottom face
+        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f};
 
     // Index data for drawing the triangles
     GLushort indices[] = {
@@ -620,8 +637,7 @@ void UCreateMesh(GLMesh& mesh)
         // Top face
         16, 17, 18, 18, 19, 16,
         // Bottom face
-        20, 21, 22, 22, 23, 20
-    };
+        20, 21, 22, 22, 23, 20};
 
     // Set up the vertex array object, vertex buffer object, and element buffer object
     glGenVertexArrays(1, &mesh.vao);
@@ -637,39 +653,45 @@ void UCreateMesh(GLMesh& mesh)
 
     // Set up vertex attribute pointers
     GLint stride = 8 * sizeof(float); // 3 for position, 3 for normal, 2 for texture coord
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void *)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void *)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0); // Unbind the VAO
 }
 
-void UCreateSphere(GLMesh& mesh, float radius, int sectorCount, int stackCount) {
+// This function generates the vertex data (positions, normals, texture coordinates) and index data for a
+// sphere mesh with a specified radius, sector count (horizontal resolution), and stack count (vertical resolution). It
+// creates a VAO, VBO, and EBO to store the mesh data and sets up the vertex attribute pointers for rendering.
+void UCreateSphere(GLMesh &mesh, float radius, int sectorCount, int stackCount)
+{
     std::vector<float> vertices;
     std::vector<unsigned int> indices;
 
-    float x, y, z, xy;              // vertex position
-    float nx, ny, nz, lengthInv = 1.0f / radius;  // normal
-    float s, t;                     // texCoord
+    float x, y, z, xy;                           // vertex position
+    float nx, ny, nz, lengthInv = 1.0f / radius; // normal
+    float s, t;                                  // texCoord
 
     float sectorStep = 2 * M_PI / sectorCount;
     float stackStep = M_PI / stackCount;
     float sectorAngle, stackAngle;
 
-    for (int i = 0; i <= stackCount; ++i) {
-        stackAngle = M_PI / 2 - i * stackStep;        // starting from pi/2 to -pi/2
-        xy = radius * cosf(stackAngle);               // r * cos(u)
-        z = radius * sinf(stackAngle);                // r * sin(u)
+    for (int i = 0; i <= stackCount; ++i)
+    {
+        stackAngle = M_PI / 2 - i * stackStep; // starting from pi/2 to -pi/2
+        xy = radius * cosf(stackAngle);        // r * cos(u)
+        z = radius * sinf(stackAngle);         // r * sin(u)
 
-        for (int j = 0; j <= sectorCount; ++j) {
-            sectorAngle = j * sectorStep;           // starting from 0 to 2pi
+        for (int j = 0; j <= sectorCount; ++j)
+        {
+            sectorAngle = j * sectorStep; // starting from 0 to 2pi
 
             // vertex position (x, y, z)
-            x = xy * cosf(sectorAngle);             // r * cos(u) * cos(v)
-            y = xy * sinf(sectorAngle);             // r * cos(u) * sin(v)
+            x = xy * cosf(sectorAngle); // r * cos(u) * cos(v)
+            y = xy * sinf(sectorAngle); // r * cos(u) * sin(v)
             vertices.push_back(x);
             vertices.push_back(y);
             vertices.push_back(z);
@@ -691,19 +713,23 @@ void UCreateSphere(GLMesh& mesh, float radius, int sectorCount, int stackCount) 
     }
 
     int k1, k2;
-    for (int i = 0; i < stackCount; ++i) {
-        k1 = i * (sectorCount + 1);     // beginning of current stack
-        k2 = k1 + sectorCount + 1;      // beginning of next stack
+    for (int i = 0; i < stackCount; ++i)
+    {
+        k1 = i * (sectorCount + 1); // beginning of current stack
+        k2 = k1 + sectorCount + 1;  // beginning of next stack
 
-        for (int j = 0; j < sectorCount; ++j, ++k1, ++k2) {
+        for (int j = 0; j < sectorCount; ++j, ++k1, ++k2)
+        {
             // 2 triangles per sector excluding first and last stacks
-            if (i != 0) {
+            if (i != 0)
+            {
                 indices.push_back(k1);
                 indices.push_back(k2);
                 indices.push_back(k1 + 1);
             }
 
-            if (i != (stackCount - 1)) {
+            if (i != (stackCount - 1))
+            {
                 indices.push_back(k1 + 1);
                 indices.push_back(k2);
                 indices.push_back(k2 + 1);
@@ -725,32 +751,37 @@ void UCreateSphere(GLMesh& mesh, float radius, int sectorCount, int stackCount) 
 
     // Vertex positions
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
     // Vertex normals
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
     // Vertex texture coords
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
 
     glBindVertexArray(0);
 
     mesh.nIndices = static_cast<GLuint>(indices.size());
 }
 
-void UCreatePlane(GLMesh& mesh) {
+// This function generates the vertex data (positions, normals, texture coordinates) and index data for a
+// simple quadrilateral plane mesh. It creates a VAO, VBO, and EBO to store the mesh data and sets up the vertex
+// attribute pointers for rendering.
+
+void UCreatePlane(GLMesh &mesh)
+{
     // Define vertices with positions, normals, and texture coordinates
     GLfloat verts[] = {
         // Positions           Normals          Texture Coords
-        -0.5f, 0.0f, -0.5f,   0.0f, 1.0f, 0.0f,  0.0f, 0.0f, // Left back
-         0.5f, 0.0f, -0.5f,   0.0f, 1.0f, 0.0f,  1.0f, 0.0f, // Right back
-         0.5f, 0.0f,  0.5f,   0.0f, 1.0f, 0.0f,  1.0f, 1.0f, // Right front
-        -0.5f, 0.0f,  0.5f,   0.0f, 1.0f, 0.0f,  0.0f, 1.0f  // Left front
+        -0.5f, 0.0f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, // Left back
+        0.5f, 0.0f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // Right back
+        0.5f, 0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,   // Right front
+        -0.5f, 0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f   // Left front
     };
 
     GLushort indices[] = {
-        0, 1, 2,  // First triangle
-        0, 2, 3   // Second triangle
+        0, 1, 2, // First triangle
+        0, 2, 3  // Second triangle
     };
 
     // Generate and bind the Vertex Array Object (VAO)
@@ -779,19 +810,23 @@ void UCreatePlane(GLMesh& mesh) {
     glEnableVertexAttribArray(0);
 
     // Define the normal attribute layout
-    glVertexAttribPointer(1, floatsPerNormal, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float) * floatsPerVertex));
+    glVertexAttribPointer(1, floatsPerNormal, GL_FLOAT, GL_FALSE, stride, (void *)(sizeof(float) * floatsPerVertex));
     glEnableVertexAttribArray(1);
 
     // Define the texture coordinate attribute layout
-    glVertexAttribPointer(2, floatsPerTexCoord, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float) * (floatsPerVertex + floatsPerNormal)));
+    glVertexAttribPointer(2, floatsPerTexCoord, GL_FLOAT, GL_FALSE, stride, (void *)(sizeof(float) * (floatsPerVertex + floatsPerNormal)));
     glEnableVertexAttribArray(2);
 
     // Unbind the VAO (not the EBO, as it's stored in the VAO)
     glBindVertexArray(0);
 }
 
-//Cylinder Creation
-void UCreateCylinder(GLMesh& mesh, float baseRadius, float topRadius, float height, int sectorCount, int stackCount) {
+// This function generates the vertex data (positions, normals, texture coordinates) and index data for
+// a cylinder mesh with a specified base radius, top radius, height, sector count (horizontal resolution), and stack
+// count (vertical resolution). It creates a VAO, VBO, and EBO to store the mesh data and sets up the vertex attribute
+// pointers for rendering.
+void UCreateCylinder(GLMesh &mesh, float baseRadius, float topRadius, float height, int sectorCount, int stackCount)
+{
     std::vector<float> vertices;
     std::vector<unsigned int> indices;
 
@@ -801,11 +836,13 @@ void UCreateCylinder(GLMesh& mesh, float baseRadius, float topRadius, float heig
     float sectorStep = 2 * M_PI / sectorCount;
     float sectorAngle;
 
-    for (int i = 0; i <= stackCount; ++i) {
+    for (int i = 0; i <= stackCount; ++i)
+    {
         float currentRadius = baseRadius + i * radiusStep;
         float currentHeight = -0.5f * height + i * stackHeight;
 
-        for (int j = 0; j <= sectorCount; ++j) {
+        for (int j = 0; j <= sectorCount; ++j)
+        {
             sectorAngle = j * sectorStep;
 
             // Vertex position
@@ -835,11 +872,13 @@ void UCreateCylinder(GLMesh& mesh, float baseRadius, float topRadius, float heig
     // Side indices
     int k1, k2;
     // Generating indices for side surfaces
-    for (int i = 0; i < stackCount; ++i) {
+    for (int i = 0; i < stackCount; ++i)
+    {
         k1 = i * (sectorCount + 1);
         k2 = k1 + sectorCount + 1;
 
-        for (int j = 0; j < sectorCount; ++j, ++k1, ++k2) {
+        for (int j = 0; j < sectorCount; ++j, ++k1, ++k2)
+        {
             // 2 triangles per sector, at each stack
             indices.push_back(k1);
             indices.push_back(k2);
@@ -854,7 +893,7 @@ void UCreateCylinder(GLMesh& mesh, float baseRadius, float topRadius, float heig
     // Top cap
     float topCenterY = height / 2.0f;
     int baseIndex = vertices.size() / 8; // 8 floats per vertex
-    int centerIndex = baseIndex; // Center vertex index for the top cap
+    int centerIndex = baseIndex;         // Center vertex index for the top cap
 
     // Center vertex for the top cap
     vertices.push_back(0.0f);
@@ -867,7 +906,8 @@ void UCreateCylinder(GLMesh& mesh, float baseRadius, float topRadius, float heig
     vertices.push_back(0.5f);
     baseIndex++;
 
-    for (int j = 0; j <= sectorCount; ++j) {
+    for (int j = 0; j <= sectorCount; ++j)
+    {
         sectorAngle = j * sectorStep;
         float x = topRadius * cosf(sectorAngle);
         float z = topRadius * sinf(sectorAngle);
@@ -882,7 +922,8 @@ void UCreateCylinder(GLMesh& mesh, float baseRadius, float topRadius, float heig
         vertices.push_back(1.0f);
     }
 
-    for (int j = 0; j < sectorCount; ++j, ++baseIndex) {
+    for (int j = 0; j < sectorCount; ++j, ++baseIndex)
+    {
         indices.push_back(centerIndex);
         indices.push_back(baseIndex);
         indices.push_back(baseIndex + 1);
@@ -903,7 +944,8 @@ void UCreateCylinder(GLMesh& mesh, float baseRadius, float topRadius, float heig
     vertices.push_back(0.5f);
     baseIndex++;
 
-    for (int j = 0; j <= sectorCount; ++j) {
+    for (int j = 0; j <= sectorCount; ++j)
+    {
         sectorAngle = j * sectorStep;
         float x = baseRadius * cosf(sectorAngle);
         float z = baseRadius * sinf(sectorAngle);
@@ -918,7 +960,8 @@ void UCreateCylinder(GLMesh& mesh, float baseRadius, float topRadius, float heig
         vertices.push_back(0.0f);
     }
 
-    for (int j = 0; j < sectorCount; ++j, ++baseIndex) {
+    for (int j = 0; j < sectorCount; ++j, ++baseIndex)
+    {
         indices.push_back(centerIndex);
         indices.push_back(baseIndex + 1);
         indices.push_back(baseIndex);
@@ -938,30 +981,36 @@ void UCreateCylinder(GLMesh& mesh, float baseRadius, float topRadius, float heig
 
     // Vertex positions
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
 
     // Vertex normals
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
 
     // Vertex texture coords
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
 
     glBindVertexArray(0);
 
     mesh.nIndices = static_cast<GLuint>(indices.size());
 }
 
-//Torus Creation
-void UCreateTorus(GLMesh& mesh, float outerRadius, float innerRadius, int nsides, int nrings) {
+// This function generates the vertex data (positions, normals, texture coordinates) and index data for a
+// torus mesh with a specified outer radius, inner radius (tube radius), ring sector count, and tube sector count. It
+// creates a VAO, VBO, and EBO to store the mesh data and sets up the vertex attribute pointers for rendering.
+
+void UCreateTorus(GLMesh &mesh, float outerRadius, float innerRadius, int nsides, int nrings)
+{
     std::vector<float> vertices;
     std::vector<unsigned int> indices;
 
     // Calculate torus vertices
-    for (int i = 0; i <= nrings; ++i) {
+    for (int i = 0; i <= nrings; ++i)
+    {
         float ringPhi = float(i) / nrings * 2.0f * M_PI;
-        for (int j = 0; j <= nsides; ++j) {
+        for (int j = 0; j <= nsides; ++j)
+        {
             float sideTheta = float(j) / nsides * 2.0f * M_PI;
 
             float cosRingPhi = cosf(ringPhi);
@@ -992,8 +1041,10 @@ void UCreateTorus(GLMesh& mesh, float outerRadius, float innerRadius, int nsides
     }
 
     // Calculate torus indices
-    for (int i = 0; i < nrings; ++i) {
-        for (int j = 0; j < nsides; ++j) {
+    for (int i = 0; i < nrings; ++i)
+    {
+        for (int j = 0; j < nsides; ++j)
+        {
             int first = (i * (nsides + 1)) + j;
             int second = first + nsides + 1;
 
@@ -1021,26 +1072,30 @@ void UCreateTorus(GLMesh& mesh, float outerRadius, float innerRadius, int nsides
 
     // Vertex positions
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
 
     // Vertex normals
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
 
     // Vertex texture coords
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
 
     glBindVertexArray(0);
 
     mesh.nIndices = static_cast<GLuint>(indices.size());
 }
 
-/*Generate and load the texture*/
-bool UCreateTexture(const char* filename, GLuint& textureId)
+// This function loads a texture from a file, flips the image vertically (since OpenGL expects textures
+// with the origin at the bottom-left corner), generates a texture object, sets up texture parameters (wrapping and
+// filtering), and loads the image data into the texture object. It returns true if the texture was loaded successfully,
+// false otherwise.
+
+bool UCreateTexture(const char *filename, GLuint &textureId)
 {
     int width, height, channels;
-    unsigned char* image = stbi_load(filename, &width, &height, &channels, 0);
+    unsigned char *image = stbi_load(filename, &width, &height, &channels, 0);
     if (image)
     {
         flipImageVertically(image, width, height, channels);
@@ -1077,18 +1132,22 @@ bool UCreateTexture(const char* filename, GLuint& textureId)
     return false;
 }
 
-void UDestroyMesh(GLMesh& mesh)
+// UDestroyMesh, UDestroySphere, UDestroyPlane, UDestroyCylinder, UDestroyTorus, and UDestroyTexture functions delete the VAO and VBOs
+// associated with the respective mesh objects, freeing up the memory used by the mesh data.
+void UDestroyMesh(GLMesh &mesh)
 {
     glDeleteVertexArrays(1, &mesh.vao);
     glDeleteBuffers(2, mesh.vbos);
 }
 
-void UDestroySphere(GLMesh& mesh) {
+void UDestroySphere(GLMesh &mesh)
+{
     glDeleteVertexArrays(1, &mesh.vao);
     glDeleteBuffers(2, mesh.vbos);
 }
 
-void UDestroyPlane(GLMesh& mesh) {
+void UDestroyPlane(GLMesh &mesh)
+{
     glDeleteVertexArrays(1, &mesh.vao);
     glDeleteBuffers(2, mesh.vbos);
 }
@@ -1097,8 +1156,11 @@ void UDestroyTexture(GLuint textureId)
 {
     glDeleteTextures(1, &textureId);
 }
-// Implements the UCreateShaders function
-bool UCreateShaderProgram(const char* vtxShaderSource, const char* fragShaderSource, GLuint& programId)
+
+//This function compiles the provided vertex and fragment shader sources, attaches them to a
+// shader program, links the program, and validates it. It returns true if the shader program was created successfully,
+// false otherwise.
+bool UCreateShaderProgram(const char *vtxShaderSource, const char *fragShaderSource, GLuint &programId)
 {
     // Compilation and linkage error reporting
     int success = 0;
@@ -1122,7 +1184,8 @@ bool UCreateShaderProgram(const char* vtxShaderSource, const char* fragShaderSou
     if (!success)
     {
         glGetShaderInfoLog(vertexShaderId, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
+                  << infoLog << std::endl;
 
         return false;
     }
@@ -1133,7 +1196,8 @@ bool UCreateShaderProgram(const char* vtxShaderSource, const char* fragShaderSou
     if (!success)
     {
         glGetShaderInfoLog(fragmentShaderId, sizeof(infoLog), NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
+                  << infoLog << std::endl;
 
         return false;
     }
@@ -1142,25 +1206,25 @@ bool UCreateShaderProgram(const char* vtxShaderSource, const char* fragShaderSou
     glAttachShader(programId, vertexShaderId);
     glAttachShader(programId, fragmentShaderId);
 
-    glLinkProgram(programId);   // links the shader program
+    glLinkProgram(programId); // links the shader program
     // check for linking errors
     glGetProgramiv(programId, GL_LINK_STATUS, &success);
     if (!success)
     {
         glGetProgramInfoLog(programId, sizeof(infoLog), NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
+                  << infoLog << std::endl;
 
         return false;
     }
 
-    glUseProgram(programId);    // Uses the shader program
+    glUseProgram(programId); // Uses the shader program
 
     return true;
 }
 
-
+//This function deletes the specified shader program object, freeing up the memory used by the shader program.
 void UDestroyShaderProgram(GLuint programId)
 {
     glDeleteProgram(programId);
 }
-

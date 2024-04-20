@@ -1,3 +1,10 @@
+/*
+ * GUICalculator.java
+ *
+ *  Date: 04/21/2023
+ *  Author: Jarrett Henkel
+ */
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
